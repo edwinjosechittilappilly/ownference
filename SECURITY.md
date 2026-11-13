@@ -1,0 +1,5 @@
+# Security
+
+Report suspected vulnerabilities privately to the maintainers through the repository's private security advisory feature when available. Do not publish bearer tokens, private prompts, or exploit details in a public issue. Until a private reporting channel is configured, avoid sharing sensitive details in public.
+
+Ownference binds only IPv4 loopback and authorizes browser origins explicitly. Tokens are bearer credentials: a holder can invoke the API without a browser Origin. Revoke compromised grants immediately. Never expose the service through a public proxy, share its configuration directory, grant untrusted origins, or treat model output as executable code. Model prompts and responses can contain sensitive data and are sent to the local provider selected by the user. A local provider itself is trusted software; Ownference does not sandbox it. Prompt injection can influence output, but Ownference supplies no tools or execution capability. DNS rebinding is mitigated with Host checks and requests cannot configure provider URLs.

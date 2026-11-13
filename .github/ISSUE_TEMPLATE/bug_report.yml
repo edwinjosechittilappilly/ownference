@@ -1,0 +1,20 @@
+name: Bug report
+description: Report reproducible behavior without private prompts or credentials.
+body:
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction and expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: OS, Node, browser, provider and model versions
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized errors and verification
+      description: Never paste tokens, private page content, or secrets.

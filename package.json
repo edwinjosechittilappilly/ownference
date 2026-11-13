@@ -1,0 +1,44 @@
+{
+  "name": "@ownference/bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "ownference": "src/cli.js"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "node --test --experimental-test-coverage --test-coverage-include='src/**/*.js' --test-coverage-lines=85 --test-coverage-branches=70 --test-coverage-functions=70",
+    "secrets": "secretlint '**/*'",
+    "check": "npm run lint && npm run secrets && npm test",
+    "build:apple": "mkdir -p bin && xcrun swiftc -parse-as-library -O apple/OwnferenceApple.swift -o bin/ownference-apple",
+    "smoke:ollama": "node scripts/smoke-ollama.js"
+  },
+  "files": [
+    "src",
+    "apple",
+    "LICENSE",
+    "NOTICE",
+    "README.md",
+    "docs"
+  ],
+  "license": "Apache-2.0",
+  "overrides": {
+    "@eslint/config-array": {
+      "minimatch": "11.0.1"
+    },
+    "eslint": {
+      "minimatch": "11.0.1"
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@secretlint/secretlint-rule-preset-recommend": "13.1.0",
+    "eslint": "10.14.0",
+    "globals": "17.14.0",
+    "secretlint": "13.1.0"
+  }
+}

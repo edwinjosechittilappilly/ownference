@@ -1,0 +1,15 @@
+name: Feature request
+description: Propose a concrete user or developer workflow.
+body:
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Workflow and problem
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Observable acceptance criteria and privacy impact
+    validations:
+      required: true
