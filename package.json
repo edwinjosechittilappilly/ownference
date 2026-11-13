@@ -1,6 +1,6 @@
 {
   "name": "@ownference/bridge",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -15,11 +15,13 @@
     "secrets": "secretlint '**/*'",
     "check": "npm run lint && npm run secrets && npm test",
     "build:apple": "mkdir -p bin && xcrun swiftc -parse-as-library -O apple/OwnferenceApple.swift -o bin/ownference-apple",
+    "build:menubar": "sh menubar/build.sh",
     "smoke:ollama": "node scripts/smoke-ollama.js"
   },
   "files": [
     "src",
     "apple",
+    "menubar",
     "LICENSE",
     "NOTICE",
     "README.md",
