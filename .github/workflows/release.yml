@@ -28,12 +28,14 @@ jobs:
       - run: npm run check
       - run: npm audit --audit-level=moderate
       - run: npm run build:apple
-      - run: bin/ownference-apple self-test
+      - run: bin/ownmode-apple self-test
       - run: npm run build:menubar
+      - run: test "$RELEASE_TAG" = "v$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' 'build/OwnMode Connect.app/Contents/Info.plist')"
+      - run: hdiutil verify build/OwnMode-Connect-MenuBar.dmg
       - run: sh menubar/test.sh
       - run: mkdir -p dist && npm pack --pack-destination dist
-      - run: cp build/Ownference-Bridge-MenuBar.zip dist/
+      - run: cp build/OwnMode-Connect-MenuBar.{zip,dmg} dist/
       - name: Checksum release artifacts
-        run: (cd dist && shasum -a 256 ./*.tgz ./*.zip > SHA256SUMS)
+        run: (cd dist && shasum -a 256 ./*.tgz ./*.zip ./*.dmg > SHA256SUMS)
       - name: Publish verified tag artifacts
-        run: gh release create "$RELEASE_TAG" dist/* --verify-tag --title "Ownference $RELEASE_TAG" --generate-notes
+        run: gh release create "$RELEASE_TAG" dist/* --verify-tag --title "OwnMode Connect $RELEASE_TAG" --notes-file RELEASE-NOTES.md

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0
+
+- Rebrand the runtime as OwnMode Connect, with new CLI, configuration, native host and LaunchAgent identities; previous installations require explicit cleanup and new grants.
+
+- Add a drag-to-Applications DMG for the universal macOS menu helper alongside the ZIP and npm tarball.
+- Publish version-checked artifacts with checksums and release installation guidance.
+- Publish publicly with anonymous HTTPS install commands, clear device/chat branding and real workspace evidence.
+- Report the package version in health responses rather than a separately maintained version literal.
+
 ## 0.2.0
 
 - Shared family identity, release-first installation and cross-project onboarding.

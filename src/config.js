@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile, rename, chmod } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-export const defaultConfigDir = () => process.env.OWNFERENCE_CONFIG_DIR || join(process.env.XDG_CONFIG_HOME || join(homedir(), '.config'), 'ownference');
+export const defaultConfigDir = () => process.env.OWNMODE_CONFIG_DIR || join(process.env.XDG_CONFIG_HOME || join(homedir(), '.config'), 'ownmode');
 export function normalizeOrigin(value) {
   let url;
   try { url = new URL(value); } catch { throw new Error('Origin must be an exact HTTP(S) or chrome-extension origin'); }

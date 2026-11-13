@@ -1,4 +1,4 @@
-# Working in Ownference
+# Working in OwnMode
 
 ## Repository map
 
@@ -6,7 +6,7 @@
 
 ## Commands and verification
 
-Use Node 24 and `npm ci`. `npm run check` runs ESLint, secret scanning and behavior tests with coverage gates. `npm run smoke:ollama` exercises real local Ollama. `npm run build:apple` builds the macOS 26 provider; `bin/ownference-apple self-test` checks Unicode deltas. See README for live availability and setup.
+Use Node 24 and `npm ci`. `npm run check` runs ESLint, secret scanning and behavior tests with coverage gates. `npm run smoke:ollama` exercises real local Ollama. `npm run build:apple` builds the macOS 26 provider; `bin/ownmode-apple self-test` checks Unicode deltas. See README for live availability and setup.
 
 ## Conventions and boundaries
 

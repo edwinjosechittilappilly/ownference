@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { authenticate, defaultConfigDir, grantNative, readGrants, revokeNative } from './config.js';
 import { executableNode, persistentNodePath } from './node-path.js';
 
-export const NATIVE_HOST_NAME = 'com.ownference.bridge';
+export const NATIVE_HOST_NAME = 'com.ownmode.bridge';
 const MAX_FRAME = 128 * 1024;
 const extensionPattern = /^[a-p]{32}$/;
 const shellQuote = value => `'${value.replaceAll("'", "'\\''")}'`;
@@ -47,7 +47,7 @@ export async function installNative(options = {}) {
   const launcher = join(p.nativeDir, 'host.sh');
   await writeFile(launcher, `#!/bin/sh\nexec ${shellQuote(nodePath)} ${shellQuote(join(p.nativeDir, 'native.js'))} --host ${shellQuote(join(p.nativeDir, 'host.json'))}\n`, { mode: 0o700 });
   await chmod(launcher, 0o700);
-  await writeFile(p.manifest, JSON.stringify({ name: NATIVE_HOST_NAME, description: 'Ownference local bridge', path: launcher, type: 'stdio', allowed_origins: [`${origin}/`] }, null, 2) + '\n', { mode: 0o600 });
+  await writeFile(p.manifest, JSON.stringify({ name: NATIVE_HOST_NAME, description: 'OwnMode local bridge', path: launcher, type: 'stdio', allowed_origins: [`${origin}/`] }, null, 2) + '\n', { mode: 0o600 });
   return { installed: true, extensionId, manifest: p.manifest, launcher };
 }
 
@@ -107,7 +107,7 @@ export function runNativeHost({ token, port = 3210, input = process.stdin, outpu
     try {
       const response = await fetch(`http://127.0.0.1:${port}/v1/${op}`, { method: op === 'models' ? 'GET' : 'POST', headers: { authorization: `Bearer ${token}`, ...(op === 'generate' ? { 'content-type': 'application/json' } : {}) }, ...(op === 'generate' ? { body: JSON.stringify(message.input) } : {}), signal: controller.signal });
       if (!response.ok) {
-        if (response.status === 401) { fail(id, 'native_grant_revoked', 'Native host authorization was revoked. Reinstall with ownference native install --extension-id <ID>.'); return; }
+        if (response.status === 401) { fail(id, 'native_grant_revoked', 'Native host authorization was revoked. Reinstall with ownmode native install --extension-id <ID>.'); return; }
         const data = await response.json().catch(() => ({}));
         fail(id, data.error?.code || 'bridge_error', data.error?.message || 'Bridge request failed'); return;
       }
@@ -133,7 +133,7 @@ export function runNativeHost({ token, port = 3210, input = process.stdin, outpu
       if (!terminal) throw new Error('Bridge stream ended unexpectedly');
     } catch {
       if (controller.signal.aborted) fail(id, 'cancelled', 'Request cancelled');
-      else fail(id, 'bridge_unavailable', 'Cannot reach the local Ownference bridge. Start it with ownference serve.');
+      else fail(id, 'bridge_unavailable', 'Cannot reach the local OwnMode bridge. Start it with ownmode serve.');
     } finally { active.delete(id); }
   }
   input.on('data', chunk => {
@@ -160,5 +160,5 @@ export function runNativeHost({ token, port = 3210, input = process.stdin, outpu
 }
 
 if (process.argv[2] === '--host' && process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
-  readFile(process.argv[3], 'utf8').then(data => runNativeHost(JSON.parse(data))).catch(() => { console.error('Ownference native host configuration unavailable. Reinstall the native host.'); process.exitCode = 1; });
+  readFile(process.argv[3], 'utf8').then(data => runNativeHost(JSON.parse(data))).catch(() => { console.error('OwnMode native host configuration unavailable. Reinstall the native host.'); process.exitCode = 1; });
 }

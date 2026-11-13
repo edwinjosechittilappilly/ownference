@@ -41,8 +41,9 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run build:apple
-      - run: bin/ownference-apple self-test
+      - run: bin/ownmode-apple self-test
       - run: npm run build:menubar
+      - run: hdiutil verify build/OwnMode-Connect-MenuBar.dmg
       - run: sh menubar/test.sh
   ci-success:
     if: always()

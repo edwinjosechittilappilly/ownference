@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { grant } from '../src/config.js';
 import { createServer } from '../src/server.js';
 
-const dir = await mkdtemp(join(tmpdir(), 'ownference-smoke-'));
+const dir = await mkdtemp(join(tmpdir(), 'ownmode-smoke-'));
 const server = createServer({ configDir: dir });
 try {
   const token = await grant('http://localhost:4173', dir);

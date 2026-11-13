@@ -1,5 +1,7 @@
 # Repository audit: ownference
 
+Historical audit of the repository before the OwnMode rebrand; findings reflect the state at the time of the audit.
+
 **Overall score: 54.8% (grade F)**  
 Detected stacks: node · traits: github actions  
 Checks: 27 pass · 8 partial · 30 fail · 31 not applicable (65 scored of 96)  

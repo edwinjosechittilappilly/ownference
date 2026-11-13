@@ -1,20 +1,25 @@
 {
-  "name": "@ownference/bridge",
-  "version": "0.2.0",
+  "name": "@ownmode/connect",
+  "version": "0.3.0",
+  "description": "Connect apps and browsers to local models with explicit origin grants.",
+  "homepage": "https://github.com/edwinjosechittilappilly/ownmode#readme",
+  "repository": { "type": "git", "url": "https://github.com/edwinjosechittilappilly/ownmode.git" },
+  "bugs": { "url": "https://github.com/edwinjosechittilappilly/ownmode/issues" },
+  "keywords": ["local-ai", "ollama", "lm-studio", "browser", "inference"],
   "private": true,
   "type": "module",
   "engines": {
     "node": ">=24"
   },
   "bin": {
-    "ownference": "src/cli.js"
+    "ownmode": "src/cli.js"
   },
   "scripts": {
     "lint": "eslint .",
     "test": "node --test --experimental-test-coverage --test-coverage-include='src/**/*.js' --test-coverage-lines=85 --test-coverage-branches=70 --test-coverage-functions=70",
     "secrets": "secretlint '**/*'",
     "check": "npm run lint && npm run secrets && npm test",
-    "build:apple": "mkdir -p bin && xcrun swiftc -parse-as-library -O apple/OwnferenceApple.swift -o bin/ownference-apple",
+    "build:apple": "mkdir -p bin && xcrun swiftc -parse-as-library -O apple/OwnModeApple.swift -o bin/ownmode-apple",
     "build:menubar": "sh menubar/build.sh",
     "smoke:ollama": "node scripts/smoke-ollama.js"
   },
