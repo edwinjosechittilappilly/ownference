@@ -1,5 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title"><title id="title">Ownference family mark</title>
-  <rect width="128" height="128" rx="30" fill="#103b32"/>
-  <g fill="none" stroke="#c8f0da" stroke-width="8"><ellipse cx="51" cy="57" rx="25" ry="30"/><ellipse cx="77" cy="57" rx="25" ry="30"/></g>
-  <path d="M64 41c3 9 7 13 16 16-9 3-13 7-16 16-3-9-7-13-16-16 9-3 13-7 16-16Z" fill="#f5f7ef"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-labelledby="title"><title id="title">OwnMode split-O mark</title><g fill="#202427"><path d="M18 46v-7C18 21 30 10 50 10s32 11 32 29v7H68v-7c0-10-6-16-18-16s-18 6-18 16v7H18zm0 8h14v7c0 10 6 16 18 16s18-6 18-16v-7h14v7c0 18-12 29-32 29S18 79 18 61v-7z"/></g></svg>

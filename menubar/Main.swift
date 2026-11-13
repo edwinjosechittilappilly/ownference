@@ -3,7 +3,7 @@ import Foundation
 import Darwin
 
 private let support = FileManager.default.homeDirectoryForCurrentUser
-    .appendingPathComponent("Library/Application Support/Ownference", isDirectory: true)
+    .appendingPathComponent("Library/Application Support/OwnMode", isDirectory: true)
 private let configURL = support.appendingPathComponent("menu-bar.plist")
 
 // Match the Node installer's stable Homebrew path policy, including GUI-resolved symlinks.
@@ -45,7 +45,7 @@ private func loadConfig() -> RuntimeConfig? {
 }
 
 private func saveConfig(_ config: RuntimeConfig) throws {
-    guard config.valid else { throw NSError(domain: "Ownference", code: 1, userInfo: [NSLocalizedDescriptionKey: "Node and runtime must be existing absolute paths; Node must be executable."]) }
+    guard config.valid else { throw NSError(domain: "OwnMode", code: 1, userInfo: [NSLocalizedDescriptionKey: "Node and runtime must be existing absolute paths; Node must be executable."]) }
     try FileManager.default.createDirectory(at: support, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
     let temporary = support.appendingPathComponent(".menu-bar-\(UUID().uuidString).plist")
     defer { try? FileManager.default.removeItem(at: temporary) }
@@ -60,7 +60,7 @@ private func saveConfig(_ config: RuntimeConfig) throws {
 private func copyRuntime(_ cli: URL, into destination: URL) throws -> URL {
     let fm = FileManager.default
     guard cli.lastPathComponent == "cli.js", cli.deletingLastPathComponent().lastPathComponent == "src" else {
-        throw NSError(domain: "Ownference", code: 2, userInfo: [NSLocalizedDescriptionKey: "Runtime must point to a package's src/cli.js."])
+        throw NSError(domain: "OwnMode", code: 2, userInfo: [NSLocalizedDescriptionKey: "Runtime must point to a package's src/cli.js."])
     }
     let root = cli.deletingLastPathComponent().deletingLastPathComponent()
     try fm.createDirectory(at: destination, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
@@ -81,7 +81,7 @@ private func copyRuntime(_ cli: URL, into destination: URL) throws -> URL {
 private func installConfig(_ supplied: RuntimeConfig) throws {
     let config = supplied.persistent
     guard config.valid else {
-        throw NSError(domain: "Ownference", code: 1, userInfo: [NSLocalizedDescriptionKey: "Node and runtime must be existing absolute paths; Node must be executable."])
+        throw NSError(domain: "OwnMode", code: 1, userInfo: [NSLocalizedDescriptionKey: "Node and runtime must be existing absolute paths; Node must be executable."])
     }
     let previous = loadConfig()
     let destination = support.appendingPathComponent("menu-runtime", isDirectory: true).appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -111,7 +111,7 @@ private func bundledRuntime() -> String {
 private func launchAgentStatus() -> Bool? {
     let task = Process()
     task.executableURL = URL(fileURLWithPath: "/bin/launchctl")
-    task.arguments = ["print", "gui/\(getuid())/com.ownference.bridge"]
+    task.arguments = ["print", "gui/\(getuid())/com.ownmode.bridge"]
     task.standardOutput = FileHandle.nullDevice
     task.standardError = FileHandle.nullDevice
     do {
@@ -175,9 +175,10 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
         if let button = item.button {
             if let url = Bundle.main.url(forResource: "menu-icon", withExtension: "png"), let image = NSImage(contentsOf: url) {
                 image.size = NSSize(width: 18, height: 18)
+                image.isTemplate = true
                 button.image = image
-            } else { button.title = "Ownference" }
-            button.toolTip = "Ownference Bridge"
+            } else { button.title = "OwnMode" }
+            button.toolTip = "OwnMode Connect"
         }
         item.menu = menu
         menu.autoenablesItems = false
@@ -186,8 +187,8 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
         timer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in self?.refresh() }
         if CommandLine.arguments.count == 3 && CommandLine.arguments[1] == "--ui-smoke" {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                guard let button = self.item.button, button.window != nil, button.image != nil,
-                      button.toolTip == "Ownference Bridge", self.item.menu === self.menu,
+                guard let button = self.item.button, button.window != nil, button.image?.isTemplate == true,
+                      button.toolTip == "OwnMode Connect", self.item.menu === self.menu,
                       self.menu.item(withTitle: "Configure Runtime…") != nil,
                       let bitmap = button.bitmapImageRepForCachingDisplay(in: button.bounds) else {
                     fputs("Menu bar UI smoke failed: missing visible status item or actions\n", stderr); exit(3)
@@ -254,10 +255,10 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
         let alert = NSAlert()
         alert.messageText = "Login service"
         alert.informativeText = agentLoaded == true
-            ? "The login service manages the bridge. If it is loaded but unreachable, choose Restart Login Service. To remove it, run `ownference startup uninstall` in Terminal."
+            ? "The login service manages the bridge. If it is loaded but unreachable, choose Restart Login Service. To remove it, run `ownmode startup uninstall` in Terminal."
             : agentLoaded == false
-                ? "The login service is not loaded. Run `ownference startup install` in Terminal to start the bridge at login."
-                : "Could not check launchd. Open Terminal and run `launchctl print gui/$(id -u)/com.ownference.bridge` for details."
+                ? "The login service is not loaded. Run `ownmode startup install` in Terminal to start the bridge at login."
+                : "Could not check launchd. Open Terminal and run `launchctl print gui/$(id -u)/com.ownmode.bridge` for details."
         alert.runModal()
     }
 
@@ -284,7 +285,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
         guard launchAgentStatus() == true else { refresh(); return }
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/bin/launchctl")
-        task.arguments = ["kickstart", "-k", "gui/\(getuid())/com.ownference.bridge"]
+        task.arguments = ["kickstart", "-k", "gui/\(getuid())/com.ownmode.bridge"]
         task.standardOutput = FileHandle.nullDevice
         task.standardError = FileHandle.nullDevice
         task.terminationHandler = { [weak self] finished in
@@ -292,7 +293,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
                 if finished.terminationStatus != 0 {
                     let alert = NSAlert()
                     alert.messageText = "Could not restart the login service"
-                    alert.informativeText = "Run `ownference startup status` in Terminal to check the installed service."
+                    alert.informativeText = "Run `ownmode startup status` in Terminal to check the installed service."
                     alert.runModal()
                 }
                 self?.refresh()
@@ -346,7 +347,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let child = process, child.isRunning else { return }
         child.terminate()
     }
-    @objc private func openWebsite() { NSWorkspace.shared.open(URL(string: "https://github.com/edwinjosechittilappilly/ownference")!) }
+    @objc private func openWebsite() { NSWorkspace.shared.open(URL(string: "https://github.com/edwinjosechittilappilly/ownmode")!) }
     @objc private func quit() { NSApplication.shared.terminate(nil) }
     func applicationWillTerminate(_ notification: Notification) {
         if let child = process, child.isRunning { child.terminate() }
@@ -370,7 +371,7 @@ private func commandLine() -> Bool {
         }
         do {
             let fm = FileManager.default
-            let temp = fm.temporaryDirectory.appendingPathComponent("ownference-menu-test-\(UUID().uuidString)")
+            let temp = fm.temporaryDirectory.appendingPathComponent("ownmode-menu-test-\(UUID().uuidString)")
             defer { try? fm.removeItem(at: temp) }
             let cellarNode = temp.appendingPathComponent("brew/Cellar/node/24.10.0/bin/node")
             let optNode = temp.appendingPathComponent("brew/opt/node/bin/node")
@@ -380,20 +381,20 @@ private func commandLine() -> Bool {
             guard persistentNodePath(cellarNode.path) == optNode.path,
                   RuntimeConfig(node: cellarNode.path, runtime: "/runtime").persistent.node == optNode.path,
                   persistentNodePath("/unmanaged/bin/node") == "/unmanaged/bin/node" else {
-                throw NSError(domain: "Ownference", code: 4)
+                throw NSError(domain: "OwnMode", code: 4)
             }
             let source = temp.appendingPathComponent("source")
             try fm.createDirectory(at: source.appendingPathComponent("src"), withIntermediateDirectories: true)
             try fm.createDirectory(at: source.appendingPathComponent("bin"), withIntermediateDirectories: true)
             try Data("cli".utf8).write(to: source.appendingPathComponent("src/cli.js"))
             try Data("package".utf8).write(to: source.appendingPathComponent("package.json"))
-            try Data("provider".utf8).write(to: source.appendingPathComponent("bin/ownference-apple"))
+            try Data("provider".utf8).write(to: source.appendingPathComponent("bin/ownmode-apple"))
             let copy = try copyRuntime(source.appendingPathComponent("src/cli.js"), into: temp.appendingPathComponent("installed"))
             try fm.removeItem(at: source)
             guard try Data(contentsOf: copy) == Data("cli".utf8),
                   try Data(contentsOf: copy.deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("package.json")) == Data("package".utf8),
-                  try Data(contentsOf: copy.deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("bin/ownference-apple")) == Data("provider".utf8) else {
-                throw NSError(domain: "Ownference", code: 3)
+                  try Data(contentsOf: copy.deletingLastPathComponent().deletingLastPathComponent().appendingPathComponent("bin/ownmode-apple")) == Data("provider".utf8) else {
+                throw NSError(domain: "OwnMode", code: 3)
             }
         } catch {
             fputs("Runtime installation self-test failed: \(error.localizedDescription)\n", stderr)
@@ -430,7 +431,7 @@ private func commandLine() -> Bool {
         let view = NSView(frame: NSRect(x: 0, y: 0, width: 320, height: 180))
         view.wantsLayer = true
         view.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
-        let summary = (["Ownference Bridge", "Bridge: \(reachable ? "reachable" : "not reachable")",
+        let summary = (["OwnMode Connect", "Bridge: \(reachable ? "reachable" : "not reachable")",
                         "Runtime: \(config == nil ? "not configured" : "configured")"] +
                        (providers.isEmpty ? [] : ["Local provider discovery (defaults):"] + providers)).joined(separator: "\n")
         let label = NSTextField(wrappingLabelWithString: summary)
@@ -444,7 +445,7 @@ private func commandLine() -> Bool {
         return true
     }
     if args.count > 1 {
-        fputs("Usage: Ownference-Bridge-MenuBar [--configure NODE [CLI [CONFIG_DIR]] | --status | --smoke | --screenshot PNG | --self-test]\n", stderr)
+        fputs("Usage: OwnModeConnect [--configure NODE [CLI [CONFIG_DIR]] | --status | --smoke | --screenshot PNG | --self-test]\n", stderr)
         exit(2)
     }
     return false

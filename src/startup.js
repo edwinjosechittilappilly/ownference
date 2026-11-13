@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { defaultConfigDir } from './config.js';
 import { persistentNodePath } from './node-path.js';
 
-const label = 'com.ownference.bridge';
+const label = 'com.ownmode.bridge';
 const defaultSource = join(dirname(fileURLToPath(import.meta.url)), '..');
 const execFileAsync = promisify(execFile);
 const runLaunchctl = args => execFileAsync('/bin/launchctl', args);
@@ -21,7 +21,7 @@ function settings(options) {
   if (platform !== 'darwin') throw new Error('Startup is only supported on macOS');
   if (![homeDir, nodePath, sourceRoot, configDir].every(path => typeof path === 'string' && isAbsolute(path))) throw new Error('Startup paths must be absolute');
   if (!Number.isInteger(uid) || uid < 0) throw new Error('Cannot determine the macOS user ID');
-  const startupDir = join(homeDir, 'Library', 'Application Support', 'Ownference', 'startup');
+  const startupDir = join(homeDir, 'Library', 'Application Support', 'OwnMode', 'startup');
   return { homeDir, nodePath, sourceRoot, uid, launchctl, configDir, startupDir,
     runtimeDir: join(startupDir, 'runtime'),
     plistPath: join(homeDir, 'Library', 'LaunchAgents', `${label}.plist`) };
@@ -70,7 +70,7 @@ async function loaded(s) {
 }
 function plist(s) {
   const args = [s.nodePath, join(s.runtimeDir, 'src', 'cli.js'), 'serve', '--config-dir', s.configDir];
-  const env = { HOME: s.homeDir, OWNFERENCE_MANAGED_STARTUP: '1' };
+  const env = { HOME: s.homeDir, OWNMODE_MANAGED_STARTUP: '1' };
   return `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0"><dict>\n<key>Label</key><string>${label}</string>\n<key>ProgramArguments</key><array>${args.map(arg => `<string>${xml(arg)}</string>`).join('')}</array>\n<key>EnvironmentVariables</key><dict>${Object.entries(env).map(([key, value]) => `<key>${key}</key><string>${xml(value)}</string>`).join('')}</dict>\n<key>RunAtLoad</key><true/>\n<key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>\n</dict></plist>\n`;
 }
 

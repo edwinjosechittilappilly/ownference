@@ -1,12 +1,12 @@
 # Architecture and threat model
 
-Ownference is a deep local-runtime module: clients learn a small task-and-stream interface while configuration, grants, providers, resource bounds and cancellation stay inside it.
+OwnMode is a deep local-runtime module: clients learn a small task-and-stream interface while configuration, grants, providers, resource bounds and cancellation stay inside it.
 
 ## Request flow
 
 CLI grant → private digest storage → exact Host/Origin validation → bearer authorization → request validation → model availability → bounded provider generation → NDJSON deltas and one terminal event.
 
-`src/config.js` owns grants and revocation. `src/server.js` owns the loopback HTTP interface and concurrency. `src/providers.js` owns real Ollama, LM Studio and Apple adapters. `apple/OwnferenceApple.swift` uses SystemLanguageModel on-device, never Private Cloud Compute. Apple snapshots are converted by Unicode scalars, not grapheme counts.
+`src/config.js` owns grants and revocation. `src/server.js` owns the loopback HTTP interface and concurrency. `src/providers.js` owns real Ollama, LM Studio and Apple adapters. `apple/OwnModeApple.swift` uses SystemLanguageModel on-device, never Private Cloud Compute. Apple snapshots are converted by Unicode scalars, not grapheme counts.
 
 The optional Chrome native messaging host is installed explicitly for one extension ID. Its private token represents that extension origin and is never returned to web pages. Chrome permits only the registered extension to launch the host; the host forwards framed, bounded requests to the authenticated loopback API and propagates cancellation. Removing the host revokes its grant. This transport does not itself approve a website: the extension owns site-level consent and document isolation.
 

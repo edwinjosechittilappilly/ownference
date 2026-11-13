@@ -16,7 +16,7 @@ func delta(previous: String, content: String) throws -> String {
     let old = previous.unicodeScalars
     let current = content.unicodeScalars
     let count = old.count
-    guard current.prefix(count).elementsEqual(old) else { throw NSError(domain: "Ownference", code: 1) }
+    guard current.prefix(count).elementsEqual(old) else { throw NSError(domain: "OwnMode", code: 1) }
     return String(current.dropFirst(count))
 }
 
@@ -37,10 +37,10 @@ func testDeltas() throws {
     do {
         _ = try delta(previous: "e\u{301}", content: "\u{e9}")
         throw NSError(domain: "SelfTest", code: 2)
-    } catch let error as NSError where error.domain == "Ownference" {}
+    } catch let error as NSError where error.domain == "OwnMode" {}
 }
 
-@main struct OwnferenceApple {
+@main struct OwnModeApple {
     static func main() async {
         if CommandLine.arguments.dropFirst().first == "self-test" {
             do { try testDeltas(); print("Apple delta self-test passed") }

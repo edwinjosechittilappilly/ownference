@@ -3,7 +3,7 @@ import { createServer } from './server.js';
 import { grant, revoke, defaultConfigDir } from './config.js';
 import { providerConfig, listModels } from './providers.js';
 
-const usage = 'Usage: ownference serve [--port 3210] [--ollama-url URL] [--lmstudio-url URL] [--config-dir PATH]\n       ownference grant|revoke --origin ORIGIN [--config-dir PATH]\n       ownference doctor [--ollama-url URL] [--lmstudio-url URL] [--config-dir PATH]\n       ownference native install --extension-id ID [--node PATH] [--port N] [--manifest-dir PATH] [--config-dir PATH]\n       ownference native uninstall|status [--manifest-dir PATH] [--config-dir PATH]\n       ownference startup install [--node PATH] [--config-dir PATH]\n       ownference startup uninstall|status [--config-dir PATH]';
+const usage = 'Usage: ownmode serve [--port 3210] [--ollama-url URL] [--lmstudio-url URL] [--config-dir PATH]\n       ownmode grant|revoke --origin ORIGIN [--config-dir PATH]\n       ownmode doctor [--ollama-url URL] [--lmstudio-url URL] [--config-dir PATH]\n       ownmode native install --extension-id ID [--node PATH] [--port N] [--manifest-dir PATH] [--config-dir PATH]\n       ownmode native uninstall|status [--manifest-dir PATH] [--config-dir PATH]\n       ownmode startup install [--node PATH] [--config-dir PATH]\n       ownmode startup uninstall|status [--config-dir PATH]';
 async function main() {
   const [command, ...args] = process.argv.slice(2);
   if (!command || command === '--help' || command === 'help') { console.log(usage); return; }
@@ -65,12 +65,12 @@ async function main() {
   if (!Number.isInteger(port) || port < 0 || port > 65535 || (flags.port !== undefined && !/^\d+$/.test(flags.port))) throw new Error('Invalid port');
   const server = createServer(options);
   server.on('error', e => {
-    if (e.code === 'EADDRINUSE' && process.env.OWNFERENCE_MANAGED_STARTUP === '1') {
-      console.error('Ownference startup stopped: the port is already owned by another process.');
+    if (e.code === 'EADDRINUSE' && process.env.OWNMODE_MANAGED_STARTUP === '1') {
+      console.error('OwnMode startup stopped: the port is already owned by another process.');
       return;
     }
     console.error(`Server failed: ${e.message}`); process.exitCode = 1;
   });
-  server.listen(port, '127.0.0.1', () => console.log(`Ownference listening at http://127.0.0.1:${server.address().port}`));
+  server.listen(port, '127.0.0.1', () => console.log(`OwnMode listening at http://127.0.0.1:${server.address().port}`));
 }
 main().catch(e => { console.error(e.message); process.exitCode = 1; });

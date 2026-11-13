@@ -31,7 +31,7 @@ function messages(stream) {
 }
 
 test('installation registers an explicit extension, keeps credentials private and removes only its grant', async t => {
-  const root = await mkdtemp(join(tmpdir(), 'ownference-native-'));
+  const root = await mkdtemp(join(tmpdir(), 'ownmode-native-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const options = { extensionId, configDir: join(root, 'config'), manifestDir: join(root, 'manifests') };
   await assert.rejects(installNative({ ...options, extensionId: 'bad' }), /extension ID/);
@@ -50,7 +50,7 @@ test('installation registers an explicit extension, keeps credentials private an
 });
 
 test('uninstall preserves a separately renewed grant and unrelated manifest', async t => {
-  const root = await mkdtemp(join(tmpdir(), 'ownference-native-'));
+  const root = await mkdtemp(join(tmpdir(), 'ownmode-native-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const options = { extensionId, configDir: join(root, 'config'), manifestDir: join(root, 'manifests') };
   const origin = `chrome-extension://${extensionId}`;
@@ -152,12 +152,12 @@ test('reports upstream and disconnected bridge failures without exposing credent
   input.write(frame({ v: 1, id: 'second', op: 'models' }));
   const disconnected = await next();
   assert.equal(disconnected.error.code, 'bridge_unavailable');
-  assert.match(disconnected.error.message, /ownference serve/);
+  assert.match(disconnected.error.message, /ownmode serve/);
   assert.doesNotMatch(JSON.stringify(disconnected), /private-token/);
 });
 
 test('installed launcher handles framed HTTP through a symlinked installation', async t => {
-  const root = await mkdtemp(join(tmpdir(), 'ownference-host-spawn-'));
+  const root = await mkdtemp(join(tmpdir(), 'ownmode-host-spawn-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const alias = join(root, 'alias');
   await symlink(root, alias);
@@ -181,7 +181,7 @@ test('installed launcher handles framed HTTP through a symlinked installation', 
 });
 
 test('native status detects revoked grant and missing Node executable', async t => {
-  const root = await mkdtemp(join(tmpdir(), 'ownference-native-status-'));
+  const root = await mkdtemp(join(tmpdir(), 'ownmode-native-status-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const options = { extensionId, configDir: join(root, 'config'), manifestDir: join(root, 'manifest') };
   await installNative(options);

@@ -9,11 +9,12 @@ import { promisify } from 'node:util';
 import { createServer } from '../src/server.js';
 import { grant, grantNative, revoke, revokeNative } from '../src/config.js';
 import { localURL } from '../src/providers.js';
+import metadata from '../package.json' with { type: 'json' };
 
 const listen = server => new Promise(resolve => server.listen(0, '127.0.0.1', () => resolve(server.address().port)));
 const close = server => new Promise(resolve => { server.closeAllConnections(); server.close(resolve); });
 async function fixture(t, handler) {
-  const dir = await mkdtemp(join(tmpdir(), 'ownference-test-'));
+  const dir = await mkdtemp(join(tmpdir(), 'ownmode-test-'));
   const provider = http.createServer(handler || ((req, res) => {
     if (req.url === '/api/tags') return res.end(JSON.stringify({ models: [{ name: 'test' }] }));
     res.writeHead(200, { 'content-type': 'application/x-ndjson' });
@@ -45,7 +46,7 @@ test('grants are private, scoped, rotated and revoked', async t => {
   assert.equal(await revoke('http://localhost:9999', f.dir), false);
   assert.equal((await fetch(f.url + '/v1/models', { headers: { ...headers(otherToken), origin: 'http://localhost:4174' } })).status, 200);
   await assert.rejects(
-    execFileAsync(process.execPath, ['src/cli.js', 'revoke', '--origin', 'http://localhost:9999', '--config-dir', f.dir], { cwd: new URL('..', import.meta.url), env: { ...process.env, HOME: f.dir, XDG_CONFIG_HOME: f.dir, OWNFERENCE_CONFIG_DIR: f.dir } }),
+    execFileAsync(process.execPath, ['src/cli.js', 'revoke', '--origin', 'http://localhost:9999', '--config-dir', f.dir], { cwd: new URL('..', import.meta.url), env: { ...process.env, HOME: f.dir, XDG_CONFIG_HOME: f.dir, OWNMODE_CONFIG_DIR: f.dir } }),
     e => e.code === 1 && /No grant found/.test(e.stderr) && /match exactly/.test(e.stderr)
   );
   assert.equal((await fetch(f.url + '/v1/models', { headers: { ...headers(otherToken), origin: 'http://localhost:4174' } })).status, 200);
@@ -88,6 +89,9 @@ test('native and standalone extension credentials rotate independently and revok
 });
 test('host validation, preflight and streaming', async t => {
   const f = await fixture(t);
+  const health = await fetch(f.url + '/health');
+  assert.equal(health.status, 200);
+  assert.deepEqual(await health.json(), { ok: true, version: metadata.version });
   // Node's Fetch implementation rewrites Host; raw HTTP exercises the actual rebinding defense.
   const forgedHostStatus = await new Promise((resolve, reject) => {
     http.get(f.url + '/health', { headers: { host: `evil.example:${f.port}` } }, response => {
@@ -121,7 +125,7 @@ test('provider errors are sanitized', async t => {
   const text = await response.text(); assert.match(text, /provider_error/); assert.doesNotMatch(text, /SECRET/);
 });
 test('Apple provider errors map known codes without exposing provider text', async t => {
-  const dir = await mkdtemp(join(tmpdir(), 'ownference-apple-test-'));
+  const dir = await mkdtemp(join(tmpdir(), 'ownmode-apple-test-'));
   const executable = join(dir, 'apple');
   await writeFile(executable, '#!/bin/sh\nif [ "$1" = status ]; then echo available; else echo \'{"type":"error","code":"input_too_large","text":"SECRET"}\'; fi\n', { mode: 0o700 });
   const server = createServer({ configDir: dir, ollamaURL: 'http://127.0.0.1:1', lmstudioURL: 'http://127.0.0.1:1', appleExecutable: executable });
@@ -166,10 +170,10 @@ test('disconnect cancels upstream and concurrency is bounded', async t => {
 });
 
 test('native and startup CLI reject malformed commands before changing configuration', async t => {
-  const root = await mkdtemp(join(tmpdir(), 'ownference-cli-'));
+  const root = await mkdtemp(join(tmpdir(), 'ownmode-cli-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const cwd = new URL('..', import.meta.url);
-  const env = { ...process.env, HOME: root, XDG_CONFIG_HOME: root, OWNFERENCE_CONFIG_DIR: root };
+  const env = { ...process.env, HOME: root, XDG_CONFIG_HOME: root, OWNMODE_CONFIG_DIR: root };
   const help = await execFileAsync(process.execPath, ['src/cli.js', '--help'], { cwd, env });
   assert.match(help.stdout, /native install --extension-id/);
   assert.match(help.stdout, /startup install/);
@@ -183,24 +187,24 @@ test('native and startup CLI reject malformed commands before changing configura
 });
 
 test('only managed startup exits cleanly when its port is already owned', async t => {
-  const root = await mkdtemp(join(tmpdir(), 'ownference-cli-port-'));
+  const root = await mkdtemp(join(tmpdir(), 'ownmode-cli-port-'));
   const owner = http.createServer((_req, res) => res.end());
   const port = await listen(owner);
   t.after(async () => { await close(owner); await rm(root, { recursive: true, force: true }); });
   const cwd = new URL('..', import.meta.url);
-  const env = { ...process.env, HOME: root, XDG_CONFIG_HOME: root, OWNFERENCE_CONFIG_DIR: root };
-  delete env.OWNFERENCE_MANAGED_STARTUP;
+  const env = { ...process.env, HOME: root, XDG_CONFIG_HOME: root, OWNMODE_CONFIG_DIR: root };
+  delete env.OWNMODE_MANAGED_STARTUP;
   const args = ['src/cli.js', 'serve', '--port', String(port)];
   await assert.rejects(execFileAsync(process.execPath, args, { cwd, env }), e => e.code === 1 && /EADDRINUSE/.test(e.stderr));
-  const managed = await execFileAsync(process.execPath, args, { cwd, env: { ...env, OWNFERENCE_MANAGED_STARTUP: '1' } });
+  const managed = await execFileAsync(process.execPath, args, { cwd, env: { ...env, OWNMODE_MANAGED_STARTUP: '1' } });
   assert.match(managed.stderr, /already owned/);
 });
 
 test('native CLI installs and removes an isolated manifest with explicit Node and bridge port', async t => {
-  const root = await mkdtemp(join(tmpdir(), 'ownference-cli-native-'));
+  const root = await mkdtemp(join(tmpdir(), 'ownmode-cli-native-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const cwd = new URL('..', import.meta.url);
-  const env = { ...process.env, HOME: root, XDG_CONFIG_HOME: root, OWNFERENCE_CONFIG_DIR: join(root, 'config') };
+  const env = { ...process.env, HOME: root, XDG_CONFIG_HOME: root, OWNMODE_CONFIG_DIR: join(root, 'config') };
   const manifestDir = join(root, 'manifests');
   const base = ['src/cli.js', 'native'];
   const run = args => execFileAsync(process.execPath, [...base, ...args], { cwd, env });
@@ -210,7 +214,7 @@ test('native CLI installs and removes an isolated manifest with explicit Node an
   const host = JSON.parse(await readFile(join(root, 'config', 'native', 'host.json'), 'utf8'));
   assert.equal(host.port, 4555);
   assert.equal(host.nodePath, process.execPath);
-  assert.equal(installed.manifest, join(manifestDir, 'com.ownference.bridge.json'));
+  assert.equal(installed.manifest, join(manifestDir, 'com.ownmode.bridge.json'));
   assert.equal(JSON.parse((await run(['status', '--manifest-dir', manifestDir])).stdout).installed, true);
   assert.equal(JSON.parse((await run(['uninstall', '--manifest-dir', manifestDir])).stdout).installed, false);
 });

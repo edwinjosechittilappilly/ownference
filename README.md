@@ -1,132 +1,132 @@
-<p align="center"><img src="docs/assets/logo.svg" width="88" alt="Ownference linked-loop logo with bridge badge"></p>
+![OwnMode Connect](docs/assets/hero.svg)
 
-# Ownference
-### Your models. Your machine. Only the apps you approve.
+# OwnMode Connect
 
-Give websites and browser tools a permissioned connection to **Apple on-device models, Ollama or LM Studio**—without a cloud inference account.
+**Switch to your own AI.**
 
-<p><a href="https://github.com/edwinjosechittilappilly/ownference/releases">Download releases</a> · <a href="#quick-start">Quick start</a> · <a href="#mac-menu-bar-and-startup">Mac app & startup</a> · <a href="#connect-a-website">Browser relay</a> · <a href="docs/architecture.md">Architecture</a></p>
+Local intelligence for your apps and browser.
 
-![Ownference: your models, your machine](docs/assets/hero.svg)
+Connect **Ollama, LM Studio and Apple Foundation Models** to cooperating websites and browser tools. You choose the model. You approve the connection.
 
-**Apache-2.0 · Node 24+ · Local inference · Private preview**
+[![CI](https://github.com/edwinjosechittilappilly/ownmode/actions/workflows/ci.yml/badge.svg)](https://github.com/edwinjosechittilappilly/ownmode/actions/workflows/ci.yml)
+[Apache-2.0](LICENSE) · [Download](https://github.com/edwinjosechittilappilly/ownmode/releases/latest) · [Developer guide](docs/architecture.md) · [Report an issue](https://github.com/edwinjosechittilappilly/ownmode/issues/new/choose)
 
-## What it unlocks
+> Just want a writing app on your Mac? Get [OwnMode Mac](https://github.com/edwinjosechittilappilly/ownmode-mac). The bridge is for connecting other apps to local models.
 
-- A writing assistant that uses the model already on your computer.
-- A cooperating web app that lets each visitor bring their own compute.
-- One local interface for switching between installed model providers.
-- A visible Mac menu-bar controller and opt-in startup, instead of an unexplained background process.
+## Get a model talking to an app
 
-Inference uses your CPU/GPU, memory and battery. There is no cloud fallback—not a promise of free or unlimited compute.
+### Upgrading from Ownference
 
-## Quick start
+Before installing OwnMode, use the old CLI to remove its startup service and native host: `ownference startup uninstall` and `ownference native uninstall` (pass any original `--config-dir` or `--manifest-dir` overrides). Stop any remaining old bridge or menu app, then uninstall the old package with `npm uninstall -g @ownference/bridge`. Otherwise the old service can keep the port occupied. OwnMode uses separate configuration and does not import grants or credentials: create new origin grants, reinstall the native host for the actual browser extension ID shown in Setup, and explicitly approve sites again. Remove old configuration only after you no longer need it.
 
-Install Node 24+, [GitHub CLI](https://cli.github.com/) and [Ollama](https://ollama.com/), or run an existing local provider. These repositories/releases are currently **private**; your GitHub account needs access.
+### Install
 
-```sh
-gh release download v0.2.0 \
-  --repo edwinjosechittilappilly/ownference \
-  --pattern ownference-bridge-0.2.0.tgz
-
-# Try the release without a global install:
-npx --yes --package "$PWD/ownference-bridge-0.2.0.tgz" ownference doctor
-
-# Or install the CLI in a user-writable npm prefix:
-npm install -g ./ownference-bridge-0.2.0.tgz
-```
-
-With Ollama running, install a model once, then start the bridge:
+Requires **Node 24+** and a running [Ollama](https://ollama.com/) installation:
 
 ```sh
+npm install -g https://github.com/edwinjosechittilappilly/ownmode/releases/download/v0.3.0/ownmode-connect-0.3.0.tgz
 ollama pull llama3.2:latest
-ownference serve
+ownmode serve
 ```
 
-In another terminal:
+Leave the bridge running. In another terminal:
 
 ```sh
-ownference grant --origin http://localhost:4173
+ownmode grant --origin http://localhost:4173
 ```
 
-Paste the token into [Ownference Web](https://github.com/edwinjosechittilappilly/ownference-web). Choose a model, paste text and generate. A grant is an exact **scheme + host + port**; `localhost` and `127.0.0.1` are different.
+Launch [OwnMode Web](https://github.com/edwinjosechittilappilly/ownmode-web#try-it), open **http://localhost:4173**, paste the grant token and choose a model. Summarize your first paragraph.
 
-Tarballs are GitHub release artifacts, **not public npm registry packages**. `npx @ownference/bridge` is not an advertised installation path. Releases include SHA256SUMS for verifying downloaded artifacts.
+![The companion OwnMode Web workspace using the local bridge](docs/assets/screenshot.png)
+
+*The companion Web workspace: choose a local model, stream a result, then copy or download it.*
+
+<details>
+<summary>Try without a global install</summary>
+
+```sh
+npx --yes --package https://github.com/edwinjosechittilappilly/ownmode/releases/download/v0.3.0/ownmode-connect-0.3.0.tgz ownmode doctor
+```
+
+Replace `doctor` with `serve` to run the bridge. Node24+ is still required. Prefer a user-writable Node/npm installation; do not use `sudo` to work around npm permissions.
+
+</details>
+
+
+## What you can build
+
+- **Bring-your-own-AI web apps:** each visitor uses their own installed models.
+- **Writing tools beside the text:** summarize, rewrite, extract, compare and draft.
+- **Browser assistance:** selected page text, deliberate review, local generation.
+- **A provider switch:** the same task interface across ready local providers.
+
+This does not intercept a website's backend AI calls or authorize autonomous purchases, email sending or shell tools.
+
+## Keep it in your Mac menu bar
+
+[**Download the menu-bar app (.dmg)**](https://github.com/edwinjosechittilappilly/ownmode/releases/download/v0.3.0/OwnMode-Connect-MenuBar.dmg) — the app is **ad-hoc signed, not notarized**; macOS may block it.
+
+Open the disk image and drag the app to Applications. The helper shows bridge status and provides start/stop and login-service recovery controls. **It still requires Node24+**; it bundles the bridge and compiled Apple adapter, not Node or third-party models.
+
+The helper is universal for Apple silicon/Intel on macOS 13+. Use your approved software policy or build from source—do not disable Gatekeeper. See [desktop setup](docs/native-startup.md).
+
+Login startup is opt-in:
+
+```sh
+ownmode startup install
+ownmode startup status
+# Remove it later:
+ownmode startup uninstall
+```
+
+The helper stops only its own processes. Startup manages a user LaunchAgent, not a system daemon. Runtime copies are durable; changing your Node installation may require reconfiguration.
 
 ## Connect a website
 
-Choose one explicit transport:
-
-| Transport | Who authorizes it | Credential visible to the page |
+| Choose | Setup | What the page receives |
 |---|---|---|
-| Direct loopback SDK | User creates a grant for the exact website origin | An origin-scoped bearer token |
-| Browser relay | User enables the current tab in Ownference Tabs; a native host is installed locally | No bridge token |
+| Direct SDK | Exact-origin grant token | An origin-scoped bearer token |
+| Browser relay | OwnMode Browser + native host + explicit tab approval | Results, never the bridge token |
 
-The relay routes **frontend → extension → native host → local bridge → model**. It does not intercept a website's server-side AI calls.
-
-Install [Ownference Tabs](https://github.com/edwinjosechittilappilly/ownference-tabs), then use the extension ID shown by Chrome:
+For relay, install [OwnMode Browser](https://github.com/edwinjosechittilappilly/ownmode-browser), then use the **actual extension ID shown in its Setup screen**:
 
 ```sh
-ownference native install --extension-id iacejanagmkfpcajmcnlbikgnmomdpba
-ownference native status
+ownmode native install --extension-id YOUR_CHROME_EXTENSION_ID
+ownmode native status
 ```
 
-The ID above belongs to the keyed unpacked release. If your installation has another ID, use that actual ID. Native installation copies code into durable private storage; it does not depend on an npx cache. Enable relay access in the extension **for the current tab**, then connect the cooperating frontend.
+Approve the cooperating tab in the extension. Its frontend uses [`createRelayClient()`](https://github.com/edwinjosechittilappilly/ownmode-web#add-local-ai-to-your-app). The route is page → extension → native host → bridge → local model, not a page fetch to localhost.
 
-Remove native messaging with `ownference native uninstall`. Revoke an origin with `ownference revoke --origin http://localhost:4173`. Revocation is explicit and takes effect on subsequent requests.
+Remove the host with `ownmode native uninstall`. Revoke direct grants with `ownmode revoke --origin http://localhost:4173`. Origins are exact: scheme, host and port; `localhost` is not `127.0.0.1`.
 
-## Mac menu bar and startup
+## Pick a provider
 
-The release also contains **Ownference-Bridge-MenuBar.zip**. Download and extract it, then open the contained app. It shows bridge reachability and provides start/stop controls; it only stops processes it started.
+| Provider | Requirements |
+|---|---|
+| Ollama | Local server at `127.0.0.1:11434`; downloaded generation model |
+| LM Studio | Local server at `127.0.0.1:1234/v1`; loaded model |
+| Apple Foundation Models | macOS 26+, Apple silicon eligible for Apple Intelligence, Apple Intelligence enabled, ready model and Swift adapter |
 
-```sh
-gh release download v0.2.0 --repo edwinjosechittilappilly/ownference \
-  --pattern Ownference-Bridge-MenuBar.zip
-ditto -x -k Ownference-Bridge-MenuBar.zip "$HOME/Applications"
-open "$HOME/Applications/Ownference-Bridge-MenuBar.app"
-```
+`ownmode doctor` reports actual availability. The npm CLI's Apple adapter requires `npm run build:apple` from source with a compatible Xcode toolchain. The menu-bar release bundles that adapter. Apple models do not run on every Mac.
 
-Configure its absolute Node/CLI paths as described in [desktop integration](docs/native-startup.md). The app is ad-hoc signed, not Developer ID signed or notarized. Do not disable Gatekeeper to run it.
+The bridge binds to `127.0.0.1:3210`. Other **loopback-only** provider endpoints use `--ollama-url` / `--lmstudio-url`; `serve --port 3211` changes the bridge port.
 
-Startup is **off until requested**:
+## Small interface, useful guarantees
 
-```sh
-ownference startup install
-ownference startup status
-ownference startup uninstall
-```
+`GET /health` reports reachability. Authenticated `GET /v1/models` lists provider-prefixed models; `POST /v1/generate` accepts `{model, task, text, instruction?}` and streams NDJSON. Tasks: `summarize`, `rewrite`, `extract`, `compare`, `draft`.
 
-These commands manage your user LaunchAgent, not a system daemon. Installation uses a durable runtime copy and an absolute Node path; changing your Node installation can require reinstallation.
+Use the [Web SDK](https://github.com/edwinjosechittilappilly/ownmode-web) for stream parsing and cancellation. Requests have input/output, concurrency and deadline limits; disconnect cancels upstream work.
 
-## Provider support
+<details>
+<summary>Privacy and permissions</summary>
 
-| Provider | Setup | Important limit |
-|---|---|---|
-| Ollama | Local server at `127.0.0.1:11434` and a downloaded generation model | Quality and capabilities depend on the selected model |
-| LM Studio | Local server at `127.0.0.1:1234/v1` and a loaded model | Live LM Studio availability is checked separately |
-| Apple on-device | macOS 26+, supported Apple Intelligence hardware, enabled/ready model and the Swift adapter | Context window, languages and Apple guardrails apply |
+No bridge prompt logging, telemetry or cloud fallback. Exact Host/Origin checks, hashed grants, loopback-only providers and private configuration permissions protect the interface. Tokens are bearer credentials; a holder can use them outside a browser. Same-origin scripts share a site's relay permission.
 
-`ownference doctor` reports actual availability. Configure other **loopback-only** provider endpoints with `--ollama-url` / `--lmstudio-url` on `serve` or `doctor`. The bridge listens only at `127.0.0.1:3210`; `serve --port 3211` changes it.
+A connected website receives generated output and may transmit it elsewhere. Local compute is not free/unlimited compute or automatic data confinement. Model output remains untrusted; model licenses and Apple's acceptable-use requirements apply.
 
-For Apple from a source checkout, run `npm run build:apple` with a compatible Xcode command-line toolchain. Prefer the standalone [Ownference Mac](https://github.com/edwinjosechittilappilly/ownference-mac) app if you want Apple preset workflows **without Node**. Apple models do not work on every Mac.
+</details>
 
-## Small developer interface
-
-- `GET /health`: reachability and runtime version.
-- Authenticated `GET /v1/models`: provider-prefixed IDs and availability.
-- Authenticated `POST /v1/generate`: `{model, task, text, instruction?}`.
-- Tasks: `summarize`, `rewrite`, `extract`, `compare`, `draft`.
-- NDJSON deltas, then exactly one completion or error; disconnect cancels upstream work.
-
-Use the [Web SDK](https://github.com/edwinjosechittilappilly/ownference-web) instead of parsing streams yourself. Input/output bounds, deadlines and concurrency limits are enforced locally.
-
-## Trust is a feature
-
-Exact Host/Origin checks, hashed grants, no wildcard CORS, loopback-only providers and private configuration permissions protect the interface. Tokens are bearer credentials: any holder can use them outside a browser. Only approve sites you trust.
-
-Prompts are not logged or persisted by the bridge. A site receiving generated output can still transmit it elsewhere. Prompt injection remains possible; generated text never authorizes file access, purchases, mail sending or shell execution. Apple acceptable-use requirements and individual model licenses still apply.
-
-## Develop, verify, contribute
+## Build with us
 
 ```sh
 npm ci
@@ -136,8 +136,10 @@ npm run build:apple
 npm run build:menubar
 ```
 
-Checks include lint, secret scanning and coverage-gated behavior tests. See [testing](docs/testing.md), [verification evidence](docs/verification.md), [security](SECURITY.md) and [contributing](CONTRIBUTING.md). No self-awarded production/security score.
+[Testing](docs/testing.md) · [Observed verification](docs/verification.md) · [Brand assets](docs/assets/README.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
-**The family:** [Bridge](https://github.com/edwinjosechittilappilly/ownference) · [Web SDK](https://github.com/edwinjosechittilappilly/ownference-web) · [Tabs + Relay](https://github.com/edwinjosechittilappilly/ownference-tabs) · [Native Mac](https://github.com/edwinjosechittilappilly/ownference-mac)
+Share a concrete integration, request a provider, or improve onboarding through an issue. Real workflows help more than a star; a star helps other builders find the project.
 
-Licensed under [Apache-2.0](LICENSE). Ownference is a working brand, not trademark-cleared. Public visibility is a separate release decision; private previews cannot spread publicly.
+**Switch to your own AI.** [Connect](https://github.com/edwinjosechittilappilly/ownmode) · [Web](https://github.com/edwinjosechittilappilly/ownmode-web) · [Browser](https://github.com/edwinjosechittilappilly/ownmode-browser) · [Mac](https://github.com/edwinjosechittilappilly/ownmode-mac)
+
+Apache-2.0. GitHub release tarballs are installed using npm; npm registry publication is not claimed. Release artifacts include SHA256SUMS. No trademark clearance is claimed.

@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-export const appleExecutable = join(root, 'bin', 'ownference-apple');
+export const appleExecutable = join(root, 'bin', 'ownmode-apple');
 const appleErrors = {
   input_too_large: 'Input is too large for the model. Shorten the input and try again.',
   guardrail_violation: 'The model declined this request due to its safety guardrails.'

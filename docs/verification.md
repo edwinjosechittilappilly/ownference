@@ -1,4 +1,17 @@
-# Observed verification — 0.2.0
+# Observed verification
+
+## OwnMode Connect 0.3.0 identity cutover
+
+- `npm run check` passed: lint, secret scanning and all 31 runtime tests.
+- The renamed Apple adapter compiled and passed its delta self-test.
+- The universal OwnMode Connect menu app built; its DMG checksum, ad-hoc signature, plist, both deployment targets and real status-item/menu behavior passed.
+- A real Chromium session exercised the renamed SDK, extension, native host and bridge with `ollama:llama3.2:latest`, including origin/document isolation, revoke, cancellation and navigation.
+- The real HTTPS workspace generated through the relay with page loopback requests blocked and no bridge token in page state. Its screenshot is included as a companion-app demonstration.
+- No user login service was enabled. Credentials and grants are intentionally not migrated. Developer ID signing, notarization and npm registry publication are not claimed.
+
+These are observed source-build checks. GitHub Actions and release download/install evidence are separate.
+
+## Historical verification — Ownference 0.2.0
 
 Environment: arm64 Mac, macOS26.2 SDK, Swift6.2.3, Node24.10.0 and real local Ollama.
 
@@ -16,4 +29,4 @@ Two independent reviews and focused re-reviews resolved native path/identity, in
 
 Release artifacts are source tarballs plus the built menu app, with checksum automation. The actual download/install verification is separate from source-checkout checks. A menu app signature is ad-hoc—not Developer ID signing/notarization. Native Mac preset-app evidence is in its own repository.
 
-Private GitHub repositories require access; no public npm publication, store approval, universal Apple availability or trademark clearance is claimed. See README for release commands and Actions for remote CI/release status.
+These observations were recorded for the private 0.2.0 preview. Repositories became public for 0.3.0; README commands now use anonymous HTTPS release downloads. Public npm registry publication, store approval, universal Apple availability and trademark clearance are not claimed. See Actions for current CI/release status.

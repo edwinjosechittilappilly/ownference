@@ -8,13 +8,13 @@ import { join } from 'node:path';
 import { installStartup, startupStatus, uninstallStartup } from '../src/startup.js';
 
 async function fixture(t) {
-  const root = await mkdtemp(join(tmpdir(), 'ownference-startup-'));
+  const root = await mkdtemp(join(tmpdir(), 'ownmode-startup-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const homeDir = join(root, 'home & user'), sourceRoot = join(root, 'source');
   await mkdir(join(sourceRoot, 'src'), { recursive: true });
   await mkdir(join(sourceRoot, 'bin'));
   await writeFile(join(sourceRoot, 'src', 'cli.js'), 'console.log(JSON.stringify(process.argv.slice(2)));\n');
-  await writeFile(join(sourceRoot, 'bin', 'ownference-apple'), 'apple helper');
+  await writeFile(join(sourceRoot, 'bin', 'ownmode-apple'), 'apple helper');
   let running = false;
   const calls = [];
   const launchctl = async args => {
@@ -35,14 +35,14 @@ test('opt-in install creates a durable restricted LaunchAgent and uninstall remo
   const content = await readFile(installed.plistPath, 'utf8');
   assert.match(content, /<key>RunAtLoad<\/key><true\/>/);
   assert.match(content, /<key>KeepAlive<\/key><dict><key>SuccessfulExit<\/key><false\/><\/dict>/);
-  assert.match(content, /<key>OWNFERENCE_MANAGED_STARTUP<\/key><string>1<\/string>/);
+  assert.match(content, /<key>OWNMODE_MANAGED_STARTUP<\/key><string>1<\/string>/);
   assert.ok(content.includes(options.nodePath));
   assert.ok(content.includes('home &amp; user'));
   assert.ok(content.includes('config &amp; grants'));
   assert.ok(content.includes('<string>--config-dir</string>'));
   assert.equal((await stat(installed.plistPath)).mode & 0o777, 0o600);
   assert.equal((await stat(join(installed.runtimeDir, '..'))).mode & 0o777, 0o700);
-  assert.equal(await readFile(join(installed.runtimeDir, 'bin', 'ownference-apple'), 'utf8'), 'apple helper');
+  assert.equal(await readFile(join(installed.runtimeDir, 'bin', 'ownmode-apple'), 'utf8'), 'apple helper');
   await rm(options.sourceRoot, { recursive: true });
   const result = await promisify(execFile)(options.nodePath, [join(installed.runtimeDir, 'src', 'cli.js'), 'serve', '--config-dir', options.configDir]);
   assert.deepEqual(JSON.parse(result.stdout), ['serve', '--config-dir', options.configDir]);
@@ -50,7 +50,7 @@ test('opt-in install creates a durable restricted LaunchAgent and uninstall remo
   await uninstallStartup(options);
   assert.deepEqual([ (await startupStatus(options)).installed, (await startupStatus(options)).loaded ], [false, false]);
   assert.ok(calls.some(args => args[0] === 'bootstrap' && args[1] === 'gui/501' && args[2] === installed.plistPath));
-  assert.ok(calls.some(args => args[0] === 'bootout' && args[1] === 'gui/501/com.ownference.bridge'));
+  assert.ok(calls.some(args => args[0] === 'bootout' && args[1] === 'gui/501/com.ownmode.bridge'));
   await uninstallStartup(options);
 });
 
@@ -121,7 +121,7 @@ test('rejects source inside the managed runtime without damaging the installatio
   await symlink(installed.runtimeDir, link);
   await assert.rejects(installStartup({ ...options, sourceRoot: link }), /source.*inside/i);
   assert.equal((await startupStatus(options)).installed, true);
-  assert.equal(await readFile(join(installed.runtimeDir, 'bin', 'ownference-apple'), 'utf8'), 'apple helper');
+  assert.equal(await readFile(join(installed.runtimeDir, 'bin', 'ownmode-apple'), 'utf8'), 'apple helper');
 });
 
 test('status checks the executable recorded in the installed plist', async t => {

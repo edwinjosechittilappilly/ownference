@@ -1,5 +1,6 @@
 import http from 'node:http';
 import { once } from 'node:events';
+import metadata from '../package.json' with { type: 'json' };
 import { readGrants, authenticate, defaultConfigDir } from './config.js';
 import { providerConfig, listModels, generate, validTasks, ProviderError } from './providers.js';
 
@@ -57,7 +58,7 @@ export function createServer(options = {}) {
         if (!knownOrigin) return error(res, 403, 'invalid_origin', 'Origin is not authorized');
         res.writeHead(204, { 'access-control-allow-methods': 'GET, POST, OPTIONS', 'access-control-allow-headers': 'Authorization, Content-Type', 'access-control-max-age': '600' }); return res.end();
       }
-      if (req.method === 'GET' && req.url === '/health') { res.writeHead(200, { 'content-type': 'application/json' }); return res.end(JSON.stringify({ ok: true, version: '0.2.0' })); }
+      if (req.method === 'GET' && req.url === '/health') { res.writeHead(200, { 'content-type': 'application/json' }); return res.end(JSON.stringify({ ok: true, version: metadata.version })); }
       const authorization = /^Bearer ([A-Za-z0-9_-]+)$/.exec(req.headers.authorization || '');
       const authorized = authorization && authenticate(grants, authorization[1]);
       if (!authorized) return error(res, 401, 'unauthorized', 'A valid bearer token is required');
