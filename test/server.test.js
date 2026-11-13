@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { createServer } from '../src/server.js';
-import { grant, revoke } from '../src/config.js';
+import { grant, grantNative, revoke, revokeNative } from '../src/config.js';
 import { localURL } from '../src/providers.js';
 
 const listen = server => new Promise(resolve => server.listen(0, '127.0.0.1', () => resolve(server.address().port)));
@@ -45,7 +45,7 @@ test('grants are private, scoped, rotated and revoked', async t => {
   assert.equal(await revoke('http://localhost:9999', f.dir), false);
   assert.equal((await fetch(f.url + '/v1/models', { headers: { ...headers(otherToken), origin: 'http://localhost:4174' } })).status, 200);
   await assert.rejects(
-    execFileAsync(process.execPath, ['src/cli.js', 'revoke', '--origin', 'http://localhost:9999', '--config-dir', f.dir], { cwd: new URL('..', import.meta.url) }),
+    execFileAsync(process.execPath, ['src/cli.js', 'revoke', '--origin', 'http://localhost:9999', '--config-dir', f.dir], { cwd: new URL('..', import.meta.url), env: { ...process.env, HOME: f.dir, XDG_CONFIG_HOME: f.dir, OWNFERENCE_CONFIG_DIR: f.dir } }),
     e => e.code === 1 && /No grant found/.test(e.stderr) && /match exactly/.test(e.stderr)
   );
   assert.equal((await fetch(f.url + '/v1/models', { headers: { ...headers(otherToken), origin: 'http://localhost:4174' } })).status, 200);
@@ -64,6 +64,27 @@ test('Chrome extension origins can be granted, authenticated and revoked without
   await revoke(origin, f.dir);
   assert.equal((await fetch(f.url + '/v1/models', { headers: { authorization: `Bearer ${token}`, origin } })).status, 403);
   assert.equal((await fetch(f.url + '/v1/models', { headers: { authorization: `Bearer ${token}` } })).status, 401);
+});
+test('native and standalone extension credentials rotate independently and revoke precisely', async t => {
+  const f = await fixture(t);
+  const origin = 'chrome-extension://iacejanagmkfpcajmcnlbikgnmomdpba';
+  const status = async token => (await fetch(f.url + '/v1/models', { headers: { authorization: `Bearer ${token}`, origin } })).status;
+  const standalone = await grant(origin, f.dir);
+  const native = await grantNative(origin, f.dir);
+  assert.equal(await status(standalone), 200);
+  assert.equal(await status(native), 200);
+  const nextStandalone = await grant(origin, f.dir);
+  assert.equal(await status(standalone), 401);
+  assert.equal(await status(native), 200);
+  const nextNative = await grantNative(origin, f.dir);
+  assert.equal(await status(native), 401);
+  assert.equal(await status(nextStandalone), 200);
+  assert.equal(await revokeNative(origin, native, f.dir), false);
+  assert.equal(await revokeNative(origin, nextNative, f.dir), true);
+  assert.equal(await status(nextNative), 401);
+  assert.equal(await status(nextStandalone), 200);
+  await revoke(origin, f.dir);
+  assert.equal(await status(nextStandalone), 403);
 });
 test('host validation, preflight and streaming', async t => {
   const f = await fixture(t);
@@ -142,4 +163,54 @@ test('disconnect cancels upstream and concurrency is bounded', async t => {
   assert.equal(third.status, 429);
   controller.abort(); controller2.abort();
   await Promise.race([disconnected, new Promise((_, reject) => setTimeout(() => reject(new Error('upstream not cancelled')), 1500))]);
+});
+
+test('native and startup CLI reject malformed commands before changing configuration', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'ownference-cli-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const cwd = new URL('..', import.meta.url);
+  const env = { ...process.env, HOME: root, XDG_CONFIG_HOME: root, OWNFERENCE_CONFIG_DIR: root };
+  const help = await execFileAsync(process.execPath, ['src/cli.js', '--help'], { cwd, env });
+  assert.match(help.stdout, /native install --extension-id/);
+  assert.match(help.stdout, /startup install/);
+  for (const args of [
+    ['native', 'install'], ['native', 'install', '--extension-id'],
+    ['native', 'status', '--extension-id', 'a'.repeat(32)],
+    ['startup', 'unknown'], ['startup', 'install', '--config-dir', '/tmp/a', '--config-dir', '/tmp/b']
+  ]) {
+    await assert.rejects(execFileAsync(process.execPath, ['src/cli.js', ...args], { cwd, env }), e => e.code === 1);
+  }
+});
+
+test('only managed startup exits cleanly when its port is already owned', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'ownference-cli-port-'));
+  const owner = http.createServer((_req, res) => res.end());
+  const port = await listen(owner);
+  t.after(async () => { await close(owner); await rm(root, { recursive: true, force: true }); });
+  const cwd = new URL('..', import.meta.url);
+  const env = { ...process.env, HOME: root, XDG_CONFIG_HOME: root, OWNFERENCE_CONFIG_DIR: root };
+  delete env.OWNFERENCE_MANAGED_STARTUP;
+  const args = ['src/cli.js', 'serve', '--port', String(port)];
+  await assert.rejects(execFileAsync(process.execPath, args, { cwd, env }), e => e.code === 1 && /EADDRINUSE/.test(e.stderr));
+  const managed = await execFileAsync(process.execPath, args, { cwd, env: { ...env, OWNFERENCE_MANAGED_STARTUP: '1' } });
+  assert.match(managed.stderr, /already owned/);
+});
+
+test('native CLI installs and removes an isolated manifest with explicit Node and bridge port', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'ownference-cli-native-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const cwd = new URL('..', import.meta.url);
+  const env = { ...process.env, HOME: root, XDG_CONFIG_HOME: root, OWNFERENCE_CONFIG_DIR: join(root, 'config') };
+  const manifestDir = join(root, 'manifests');
+  const base = ['src/cli.js', 'native'];
+  const run = args => execFileAsync(process.execPath, [...base, ...args], { cwd, env });
+  await assert.rejects(run(['install', '--extension-id', 'a'.repeat(32), '--manifest-dir', 'relative']), /absolute/);
+  await assert.rejects(run(['install', '--extension-id', 'a'.repeat(32), '--port', '0']), /Invalid bridge port/);
+  const installed = JSON.parse((await run(['install', '--extension-id', 'a'.repeat(32), '--manifest-dir', manifestDir, '--port', '4555', '--node', process.execPath])).stdout);
+  const host = JSON.parse(await readFile(join(root, 'config', 'native', 'host.json'), 'utf8'));
+  assert.equal(host.port, 4555);
+  assert.equal(host.nodePath, process.execPath);
+  assert.equal(installed.manifest, join(manifestDir, 'com.ownference.bridge.json'));
+  assert.equal(JSON.parse((await run(['status', '--manifest-dir', manifestDir])).stdout).installed, true);
+  assert.equal(JSON.parse((await run(['uninstall', '--manifest-dir', manifestDir])).stdout).installed, false);
 });

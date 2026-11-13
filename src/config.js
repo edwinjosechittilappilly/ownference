@@ -26,12 +26,28 @@ async function save(dir, grants) {
   await writeFile(tmp, JSON.stringify(grants) + '\n', { mode: 0o600, flag: 'wx' });
   await rename(tmp, join(dir, 'grants.json'));
 }
-export async function grant(origin, dir = defaultConfigDir()) {
+async function issue(origin, dir, native) {
   origin = normalizeOrigin(origin);
   const token = randomBytes(32).toString('base64url');
   const grants = await readGrants(dir);
-  await save(dir, [...grants.filter(g => g.origin !== origin), { origin, digest: digest(token) }]);
+  const retained = grants.filter(g => g.origin !== origin || (g.native === true) !== native);
+  await save(dir, [...retained, { origin, digest: digest(token), ...(native ? { native: true } : {}) }]);
   return token;
+}
+export async function grant(origin, dir = defaultConfigDir()) {
+  return issue(origin, dir, false);
+}
+export async function grantNative(origin, dir = defaultConfigDir()) {
+  return issue(origin, dir, true);
+}
+export async function revokeNative(origin, token, dir = defaultConfigDir()) {
+  origin = normalizeOrigin(origin);
+  const grants = await readGrants(dir);
+  const hash = digest(token);
+  const remaining = grants.filter(g => !(g.origin === origin && g.native === true && g.digest === hash));
+  if (remaining.length === grants.length) return false;
+  await save(dir, remaining);
+  return true;
 }
 export async function revoke(origin, dir = defaultConfigDir()) {
   origin = normalizeOrigin(origin);

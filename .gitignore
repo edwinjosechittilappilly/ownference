@@ -5,3 +5,5 @@ coverage/
 .env
 .env.*
 grants.json
+build/
+dist/

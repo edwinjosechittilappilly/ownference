@@ -1,0 +1,39 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions: {}
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: macos-26
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: test "$RELEASE_TAG" = "v$(node -p 'JSON.parse(require("fs").readFileSync("package.json")).version')"
+      - run: npm ci --ignore-scripts
+      - run: npm run check
+      - run: npm audit --audit-level=moderate
+      - run: npm run build:apple
+      - run: bin/ownference-apple self-test
+      - run: npm run build:menubar
+      - run: sh menubar/test.sh
+      - run: mkdir -p dist && npm pack --pack-destination dist
+      - run: cp build/Ownference-Bridge-MenuBar.zip dist/
+      - name: Checksum release artifacts
+        run: (cd dist && shasum -a 256 ./*.tgz ./*.zip > SHA256SUMS)
+      - name: Publish verified tag artifacts
+        run: gh release create "$RELEASE_TAG" dist/* --verify-tag --title "Ownference $RELEASE_TAG" --generate-notes

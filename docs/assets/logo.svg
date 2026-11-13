@@ -1,1 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title"><title id="title">Ownference</title><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#62ead0"/><stop offset="1" stop-color="#72a8ff"/></linearGradient></defs><rect width="128" height="128" rx="30" fill="#101c30"/><path d="M64 20 102 42v44l-38 22-38-22V42z" fill="none" stroke="url(#g)" stroke-width="8"/><circle cx="64" cy="64" r="17" fill="none" stroke="#e8fff9" stroke-width="8"/><circle cx="64" cy="20" r="5" fill="#62ead0"/><circle cx="102" cy="86" r="5" fill="#72a8ff"/><circle cx="26" cy="86" r="5" fill="#72a8ff"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">Ownference Bridge</title><desc id="desc">The shared Ownference linked loops and spark, with a connected-node bridge badge.</desc>
+  <rect width="128" height="128" rx="30" fill="#103b32"/>
+  <g fill="none" stroke="#c8f0da" stroke-width="8"><ellipse cx="51" cy="57" rx="25" ry="30"/><ellipse cx="77" cy="57" rx="25" ry="30"/></g>
+  <path d="M64 41c3 9 7 13 16 16-9 3-13 7-16 16-3-9-7-13-16-16 9-3 13-7 16-16Z" fill="#f5f7ef"/>
+  <rect x="83" y="83" width="39" height="39" rx="13" fill="#268568" stroke="#f5f7ef" stroke-width="3"/>
+  <g stroke="#fff" stroke-width="2.5" fill="#fff"><path d="m94 108 8-12 10 12" fill="none"/><circle cx="94" cy="108" r="2"/><circle cx="102" cy="96" r="2"/><circle cx="112" cy="108" r="2"/></g>
+</svg>
